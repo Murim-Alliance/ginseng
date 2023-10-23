@@ -55,7 +55,7 @@ object Sect {
  *
  * @param courtyards the Courtyards of the Sect and the Scrolls that they teach.
  */
-private[ginseng] final class Sect (private val courtyards: Courtyards, private val scrolls: immutable.TreeSet[ScrollId]) {
+private[ginseng] final class Sect(private val courtyards: Courtyards, private val scrolls: immutable.TreeSet[ScrollId]) {
 
 	/**
 	 * Returns an immutable indexes sequence of ScrollIds contained in the Sect.

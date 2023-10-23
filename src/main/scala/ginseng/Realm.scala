@@ -18,6 +18,48 @@ class Realm {
 	 */
 	private val emperor = Emperor()
 
+	def setScrollOnDisciple[T: ClassTag](disciple: Disciple, t: T): Unit = {
+		// check if disciple is alive
+		if !palace.isActive(disciple) then return
+
+		val scrollId = registry.getValue[T] match {
+			case Some(d1) => d1
+			case None =>
+				val d1 = spawn()
+				registry.register[T](d1)
+				d1
+		}
+		emperor.teachScrollToDisciple(disciple, t, scrollId, palace.metas)
+	}
+
+	def setTagOnDisciple(disciple: Disciple, tag: Disciple): Unit = {
+
+		// check if disciple is alive
+		if !palace.isActive(disciple) then return
+		else {
+		// Unit value because it's a tag
+			emperor.teachScrollToDisciple(disciple = disciple, scroll = (), scrollId = tag, palace.metas)
+		}
+	}
+
+	def unsetTagOnDisciple[T](disciple: Disciple, tag: Disciple): Unit = {
+		if !palace.isActive(disciple) then ()
+		else {
+			emperor.forgetScrollForDisciple(disciple, tag, palace.metas)
+		}
+	}
+
+	def unsetScrollOnDisciple[T: ClassTag](disciple: Disciple, scrollId: ScrollId): Unit = {
+		if !palace.isActive(disciple) then ()
+		else {
+			val scrollId = registry.getValue[T] match {
+				case Some(d1) => d1
+				case None => return
+			}
+			emperor.forgetScrollForDisciple(disciple, scrollId, palace.metas)
+		}
+	}
+
 	/**
 	 * TODO
 	 */
@@ -28,17 +70,5 @@ class Realm {
 		newDisciple
 	}
 
-	def setOnDisciple[K: ClassTag](disciple: Disciple, t: K): Unit = {
-		val scrollId = registry.getValue[K] match {
-			case Some(d1) => d1
-			case None =>
-				val d1 = spawn()
-				registry.register[K](d1)
-				d1
-		}
-	}
 
-	def setOnDisciple(disciple: Disciple, tag: Disciple): Unit = {
-
-	}
 }

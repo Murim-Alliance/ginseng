@@ -2,9 +2,7 @@ package ginseng
 
 import scala.collection.mutable
 import scala.compiletime.constValue
-import scala.reflect.{ClassManifest, ClassTag, classTag}
-
-
+import scala.reflect.ClassTag
 
 
 /**

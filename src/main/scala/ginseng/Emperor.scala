@@ -26,7 +26,7 @@ object Emperor {
 /**
  * TODO
  *
- * @param sects TODO
+ * @param sects     TODO
  * @param scrollIds TODO
  */
 private[ginseng] class Emperor private
@@ -39,7 +39,7 @@ private[ginseng] class Emperor private
 	 * TODO
 	 *
 	 * @param disciple TODO
-	 * @param metas TODO
+	 * @param metas    TODO
 	 */
 	def placeNewDisciple(disciple: Disciple, metas: mutable.ArrayBuffer[Option[(Sect, HallId)]]): Unit = {
 		// Assumes disciple is valid and correct gen
@@ -56,9 +56,9 @@ private[ginseng] class Emperor private
 	 *
 	 * @param disciple TODO
 	 * @param scrollId TODO
-	 * @param metas TODO
+	 * @param metas    TODO
 	 */
-	def removeScrollFromDisciple(disciple: Disciple, scrollId: ScrollId, metas: Metas): Unit = {
+	def forgetScrollForDisciple(disciple: Disciple, scrollId: ScrollId, metas: Metas): Unit = {
 		// invariant, check before calling if disciple is active so this doesn't mess up
 		// should be Some so don't check
 		val (sect, hall): (Sect, HallId) = metas(disciple.id).get
@@ -96,9 +96,9 @@ private[ginseng] class Emperor private
 	 * TODO
 	 *
 	 * @param disciple TODO
-	 * @param scroll TODO
+	 * @param scroll   TODO
 	 * @param scrollId TODO
-	 * @param metas TODO
+	 * @param metas    TODO
 	 */
 	def teachScrollToDisciple(disciple: Disciple, scroll: Any, scrollId: ScrollId, metas: Metas): Unit = {
 		// invariant, check before calling if disciple is active so this doesn't mess up

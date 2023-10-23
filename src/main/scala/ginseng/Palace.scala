@@ -1,6 +1,5 @@
 package ginseng
 
-import ginseng.Entry.{Exiled, Recruited}
 
 import scala.collection.mutable
 
@@ -44,22 +43,18 @@ type Metas = mutable.ArrayBuffer[Option[(Sect, HallId)]]
 private[ginseng] class Palace private {
 
 	/**
-	 * Stores which Disciples are alive and their generation.
-	 */
-	private val entries = mutable.ArrayBuffer[Entry]()
-
-	/**
-	 * Stores the indices of the Disciples are currently not allocated.
-	 */
-	private val exiled = mutable.ArrayBuffer[Int]()
-
-	/**
 	 * Stores the location of each Disciple in a Sect and the Sect it belongs to.
 	 * If an Disciple is not currently allocated, the value in here will be None.
 	 */
 	val metas: Metas = mutable.ArrayBuffer[Option[(Sect, HallId)]]()
-
-
+	/**
+	 * Stores which Disciples are alive and their generation.
+	 */
+	private val entries = mutable.ArrayBuffer[Entry]()
+	/**
+	 * Stores the indices of the Disciples are currently not allocated.
+	 */
+	private val exiled = mutable.ArrayBuffer[Int]()
 
 	/**
 	 * Allocates a new Disciple or reuses an old Disciple if one is available.
@@ -110,7 +105,7 @@ private[ginseng] class Palace private {
 	 * @param disciple The Disciple to check.
 	 * @return True if the Disciple is currently allocated and has the correct generation number, false otherwise.
 	 */
-	private def isActive(disciple: Disciple): Boolean = {
+	def isActive(disciple: Disciple): Boolean = {
 		this.entries(disciple.id) match {
 			case Entry.Recruited(gen) => gen == disciple.gen
 			case Entry.Exiled(_) => false
