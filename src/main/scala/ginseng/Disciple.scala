@@ -1,5 +1,19 @@
 package ginseng
 
+/**
+ * TODO
+ */
+object Disciple {
+	/**
+	 * TODO
+	 */
+	val DiscipleScrollId: Disciple = Disciple(0, 0)
+
+	/**
+	 * TODO
+	 */
+	implicit val discipleOrdering: Ordering[Disciple] = (x: Disciple, y: Disciple) => x.id.compareTo(y.id)
+}
 
 /**
  * Represents a Disciple with a unique identifier and generation number.
@@ -10,9 +24,3 @@ package ginseng
  *            When an Disciple is allocated, its generation is set to 0, which means that the Disciple is alive and can be used.
  */
 case class Disciple(id: Int, gen: Int)
-
-object Disciple {
-  val DiscipleScrollId: Disciple = Disciple(0, 0)
-
-  implicit val discipleOrdering: Ordering[Disciple] = (x: Disciple, y: Disciple) => x.id.compareTo(y.id)
-}
