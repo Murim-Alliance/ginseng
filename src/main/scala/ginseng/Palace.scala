@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 /**
  * Represents the state of an Disciple in the Palace.
- *  Disciple can either be Recruited, meaning it is currently allocated.
+ * Disciple can either be Recruited, meaning it is currently allocated.
  * If the Disciple is Exiled, the Disciple is currently not allocated, containing its next generation.
  */
 private enum Entry {
@@ -31,6 +31,8 @@ object Palace {
 
 type Hall = Int
 
+type Metas = mutable.ArrayBuffer[Option[(Sect, Hall)]]
+
 class Palace private {
   /**
    * Type Alias for readability.
@@ -51,7 +53,7 @@ class Palace private {
    * Stores the location of each Disciple in a Sect and the Sect it belongs to.
    * If an Disciple is not currently allocated, the value in here will be None.
    */
-  private val meta = mutable.ArrayBuffer[Option[(Sect, Hall)]]()
+  private val metas: Metas = mutable.ArrayBuffer[Option[(Sect, Hall)]]()
 
   /**
    * Allocates a new Disciple or reuses an old Disciple if one is available.
@@ -75,13 +77,13 @@ class Palace private {
         val entry = Entry.Recruited(0)
         val entity = Disciple(this.entries.length, 0)
         this.entries.addOne(entry)
-        this.meta.addOne(None)
+        this.metas.addOne(None)
         entity
   }
 
   /**
    * Deallocates the given Disciple if it is currently allocated.
-   * If the Disciple is deallocated, its corresponding entry in the `meta` array is set to None.
+   * If the Disciple is deallocated, its corresponding entry in the `metas` array is set to None.
    *
    * @param disciple The Disciple to deallocate.
    * @return True if the Disciple was deallocated, false otherwise.
@@ -90,7 +92,7 @@ class Palace private {
     if this.isActive(disciple) then
       this.entries.update(disciple.id, Entry.Exiled(disciple.gen + 1))
       this.exiled.addOne(disciple.id)
-      this.meta.update(disciple.id, None)
+      this.metas.update(disciple.id, None)
       true
     else
       false

@@ -9,3 +9,7 @@ package ginseng
  *            When an Disciple is allocated, its generation is set to 0, which means that the Disciple is alive and can be used.
  */
 case class Disciple(id: Int, gen: Int)
+
+object Disciple {
+  val DiscipleScrollId: Disciple = Disciple(0, 0)
+}

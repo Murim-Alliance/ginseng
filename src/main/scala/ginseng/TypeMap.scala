@@ -25,13 +25,13 @@ class TypeMap[V] {
    * @tparam K the type of the class to look up the value for.
    * @return an `Option` containing the value associated with the class `K`, if such value exists.
    */
-  def get_value[K: ClassTag](): Option[V] = this.inner.get(implicitly[ClassTag[K]].runtimeClass)
+  def getValue[K: ClassTag]: Option[V] = this.inner.get(implicitly[ClassTag[K]].runtimeClass)
 
   /**
    * De-registers a type by the value it maps to
    *
    * @param value the value to de-register by.
    */
-  def deregister_by_value(value: V): Unit = this.inner.filterInPlace((_, v1) => v1 == value)
+  def DeregisterByValue(value: V): Unit = this.inner.filterInPlace((_, v1) => v1 == value)
 
 }
