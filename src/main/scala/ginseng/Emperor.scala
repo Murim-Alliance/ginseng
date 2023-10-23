@@ -7,7 +7,7 @@ object Emperor {
     val sects = mutable.ArrayBuffer[Sect]()
     val sect1 = Sect().extendWith(Disciple(0, 0));
     sects.addOne(sect1)
-    val scrolls = mutable.ArrayBuffer[immutable.IndexedSeq[ScrollId]]()
+    val scrolls = mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]()
     scrolls.addOne(sect1.exposeScrollIds)
     new Emperor(sects, scrolls)
   }
@@ -16,7 +16,7 @@ object Emperor {
 class Emperor private
 (
   val sects: mutable.ArrayBuffer[Sect],
-  val scrollIds: mutable.ArrayBuffer[immutable.IndexedSeq[ScrollId]]
+  val scrollIds: mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]
 ) {
 
 

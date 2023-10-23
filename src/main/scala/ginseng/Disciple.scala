@@ -1,5 +1,6 @@
 package ginseng
 
+
 /**
  * Represents a Disciple with a unique identifier and generation number.
  *
@@ -12,4 +13,6 @@ case class Disciple(id: Int, gen: Int)
 
 object Disciple {
   val DiscipleScrollId: Disciple = Disciple(0, 0)
+
+  implicit val discipleOrdering: Ordering[Disciple] = (x: Disciple, y: Disciple) => x.id.compareTo(y.id)
 }
