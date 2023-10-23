@@ -1,7 +1,11 @@
 package ginseng
 
 import scala.collection.mutable
-import scala.reflect.ClassTag
+import scala.compiletime.constValue
+import scala.reflect.{ClassManifest, ClassTag, classTag}
+
+
+
 
 /**
  * A map that associates a value of type `V` with a class of type `K`.
@@ -9,7 +13,10 @@ import scala.reflect.ClassTag
  * @tparam V the type of the value stored in the map.
  */
 private[ginseng] final class TypeMap[V] {
-	private val inner = mutable.HashMap[Class[_], V]();
+	/**
+	 * TODO
+	 */
+	private val inner = mutable.HashMap[ClassTag[_], V]();
 
 	/**
 	 * Registers a value of type `V` for the class `K`.
@@ -17,7 +24,7 @@ private[ginseng] final class TypeMap[V] {
 	 * @tparam K the type of the class to register the value for.
 	 * @param value the value to register.
 	 */
-	@inline def register[K: ClassTag](value: V): Unit = this.inner.put(implicitly[ClassTag[K]].runtimeClass, value)
+	def register[K](value: V)(implicit classTag: ClassTag[K]): Unit = this.inner.put(classTag, value)
 
 	/**
 	 * Returns the value associated with the class `K`, if any.
@@ -25,12 +32,12 @@ private[ginseng] final class TypeMap[V] {
 	 * @tparam K the type of the class to look up the value for.
 	 * @return an `Option` containing the value associated with the class `K`, if such value exists.
 	 */
-	@inline def getValue[K: ClassTag]: Option[V] = this.inner.get(implicitly[ClassTag[K]].runtimeClass)
+	def getValue[K](implicit classTag: ClassTag[K]): Option[V] = this.inner.get(classTag)
 
 	/**
 	 * De-registers a type by the value it maps to
 	 *
 	 * @param value the value to de-register by.
 	 */
-	@inline def DeregisterByValue(value: V): Unit = this.inner.filterInPlace((_, v1) => v1 == value)
+	def DeregisterByValue(value: V): Unit = this.inner.filterInPlace((_, v1) => v1 == value)
 }
