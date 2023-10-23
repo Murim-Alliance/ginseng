@@ -110,7 +110,7 @@ private[ginseng] final class Sect(private val courtyards: Courtyards, private va
 	def lossyTransferHallTo(destinationSect: Sect, hallId: HallId): Unit = {
 		// Remove row in src
 		val row: Map[ScrollId, Any] = this.courtyards.iterator.map(p => (p._1, p._2.swapRemove(hallId))).toMap
-		println(row)
+
 		// Add to dst table
 		destinationSect.courtyards.foreach(pair => {
 			row.get(pair._1) match {
@@ -146,6 +146,14 @@ private[ginseng] final class Sect(private val courtyards: Courtyards, private va
 			case None => ???
 		}
 
+	/**
+	 * TODO
+	 *
+	 * @param scrollId TODO
+	 * @param hallId   TODO
+	 * @return TODO
+	 */
+	@inline def getScrollValue(scrollId: ScrollId, hallId: HallId): Option[Any] = courtyards.get(scrollId).map(_(hallId))
 
 	/**
 	 * Dumps the Hall which will automatically deallocate it.

@@ -2,6 +2,9 @@ package ginseng
 
 import scala.reflect.ClassTag
 
+object Realm {
+	def apply() = new Realm()
+}
 class Realm {
 	/**
 	 * TODO
@@ -18,6 +21,13 @@ class Realm {
 	 */
 	private val emperor = Emperor()
 
+	/**
+	 * TODO
+	 *
+	 * @param disciple TODO
+	 * @param t TODO
+	 * @tparam T TODO
+	 */
 	def setScrollOnDisciple[T: ClassTag](disciple: Disciple, t: T): Unit = {
 		// check if disciple is alive
 		if !palace.isActive(disciple) then return
@@ -32,6 +42,12 @@ class Realm {
 		emperor.teachScrollToDisciple(disciple, t, scrollId, palace.metas)
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @param disciple TODO
+	 * @param tag TODO
+	 */
 	def setTagOnDisciple(disciple: Disciple, tag: Disciple): Unit = {
 
 		// check if disciple is alive
@@ -42,6 +58,13 @@ class Realm {
 		}
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @param disciple TODO
+	 * @param tag TODO
+	 * @tparam T TODO
+	 */
 	def unsetTagOnDisciple[T](disciple: Disciple, tag: Disciple): Unit = {
 		if !palace.isActive(disciple) then ()
 		else {
@@ -49,6 +72,13 @@ class Realm {
 		}
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @param disciple TODO
+	 * @param scrollId TODO
+	 * @tparam T TODO
+	 */
 	def unsetScrollOnDisciple[T: ClassTag](disciple: Disciple, scrollId: ScrollId): Unit = {
 		if !palace.isActive(disciple) then ()
 		else {
@@ -60,6 +90,23 @@ class Realm {
 		}
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @param disciple TODO
+	 * @tparam T TODO
+	 * @return TODO
+	 */
+	def getScrollFromDisciple[T: ClassTag](disciple: Disciple): Option[T] = {
+		if !palace.isActive(disciple) then return None
+		val scrollId = registry.getValue[T] match {
+			case Some(scroll) => scroll
+			case None => return None
+		}
+		// Must be some
+		val (sect, hall): (Sect, HallId) = palace.metas(disciple.id).get
+		sect.getScrollValue(scrollId, hall).map(_.asInstanceOf[T])
+	}
 	/**
 	 * TODO
 	 */
