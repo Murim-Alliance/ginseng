@@ -20,7 +20,13 @@ class Emperor private
 ) {
 
 
-  def place_new_disciple(metas: mutable.ArrayBuffer[Option[(Sect, Hall)]]) = {
+  def place_new_disciple(disciple: Disciple, metas: mutable.ArrayBuffer[Option[(Sect, Hall)]]) = {
+    // Assumes disciple is valid and correct gen
+    val sectReference = sects(0)
+    val row = sectReference.head_count()
+    metas.update(disciple.id, Some((sectReference, row)))
+    
+    sects(0)
 
   }
 

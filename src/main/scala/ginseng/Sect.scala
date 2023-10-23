@@ -5,29 +5,30 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.{immutable, mutable}
 
 type ScrollId = Disciple
-type Courtyard = mutable.ArrayBuffer[(ScrollId, mutable.ArrayBuffer[Any])]
+type Courtyards = mutable.ArrayBuffer[(ScrollId, mutable.ArrayBuffer[Any])]
 
 object Sect {
   def apply() = new Sect()
 }
 
-class Sect private(val columns: Courtyard = mutable.ArrayBuffer()) {
+class Sect private(val courtyards: Courtyards = mutable.ArrayBuffer()) {
 
   def exposeScrollIds(): immutable.IndexedSeq[ScrollId] = {
-    this.columns.map(p => p._1).toIndexedSeq
+    this.courtyards.map(p => p._1).toIndexedSeq
   }
 
   def extend_with(scrollId: ScrollId): Sect = {
     // Do not push the same column twice
 
     val newColumns = medium_clone()
-    columns.binarySearch(scrollId) match {
+    courtyards.binarySearch(scrollId) match {
       case Some(index) => newColumns.insert(index, (scrollId, mutable.ArrayBuffer.empty[Any]))
       case None => newColumns.addOne((scrollId, mutable.ArrayBuffer.empty[Any]))
     }
     new Sect(newColumns)
   }
 
+  def head_count(): Int = courtyards(0)._2.length
   def reduce_with(scrollId: ScrollId): Sect = {
     // Do not reduce tables that do not contain the component
 
@@ -36,16 +37,16 @@ class Sect private(val columns: Courtyard = mutable.ArrayBuffer()) {
     new Sect(to_reduce)
   }
 
-  private def medium_clone(): Courtyard = {
-    this.columns.map(pair => (pair._1, mutable.ArrayBuffer.empty[Any]))
+  private def medium_clone(): Courtyards = {
+    this.courtyards.map(pair => (pair._1, mutable.ArrayBuffer.empty[Any]))
   }
 
   def lossy_transfer_hall_to(dst_sect: Sect, current_hall: Int): Unit = {
     // Remove row in src
-    val row: Map[ScrollId, Any] = this.columns.map(pair => (pair._1, pair._2.swap_remove(current_hall))).toMap
+    val row: Map[ScrollId, Any] = this.courtyards.map(pair => (pair._1, pair._2.swap_remove(current_hall))).toMap
 
     // Add to dst table
-    dst_sect.columns.foreach(pair => {
+    dst_sect.courtyards.foreach(pair => {
       row.get(pair._1) match {
         case Some(value) => dst_sect.push_value(pair._1, value)
         case None => ??? // implied reduction/lossy
@@ -53,20 +54,20 @@ class Sect private(val columns: Courtyard = mutable.ArrayBuffer()) {
     })
   }
 
-  private def push_value(componentId: ScrollId, value: Any): Unit = {
+  private def push_value(scrollId: ScrollId, value: Any): Unit = {
     // assumes ComponentId exists/is valid
-    val i = columns.binarySearch(componentId).get
-    columns(i)._2.addOne(value)
+    val i = courtyards.binarySearch(scrollId).get
+    courtyards(i)._2.addOne(value)
   }
 
   def dump_hall(row: Int): Unit = {
     // Dumps the row which will automatically deallocate it
     // Should only be done if entity is being deallocated
     // Meta should also be cleared
-    this.columns.foreach(_._2.swap_remove(row))
+    this.courtyards.foreach(_._2.swap_remove(row))
   }
 
-  def has_courtyard(scrollId: ScrollId): Boolean = this.columns.binarySearch(scrollId).nonEmpty
+  def has_courtyard(scrollId: ScrollId): Boolean = this.courtyards.binarySearch(scrollId).nonEmpty
 }
 
 
@@ -87,7 +88,7 @@ extension[T] (array: mutable.ArrayBuffer[T])
     }
   }
 
-extension (courtyards: Courtyard)
+extension (courtyards: Courtyards)
   def binarySearch(scrollId: ScrollId): Option[Int] = {
     @tailrec
     def search(left: Int, right: Int): Option[Int] = {

@@ -48,16 +48,16 @@ class Palace private {
   private val exiled = mutable.ArrayBuffer[Int]()
 
   /**
-   * Stores the location of each entity in a table and the table it belongs to.
-   * If an entity is not currently allocated, the value in here will be None.
+   * Stores the location of each Disciple in a Sect and the Sect it belongs to.
+   * If an Disciple is not currently allocated, the value in here will be None.
    */
   private val meta = mutable.ArrayBuffer[Option[(Sect, Hall)]]()
 
   /**
-   * Allocates a new entity or reuses an old entity if one is available.
-   * If the old entity is reused, its generation number is incremented.
+   * Allocates a new Disciple or reuses an old Disciple if one is available.
+   * If the old Disciple is reused, its generation number is incremented.
    *
-   * @return The allocated or reused entity.
+   * @return The allocated or reused Disciple.
    */
   def recruit(): Disciple = {
     this.exiled.lift(exiled.size - 1).map(exiled.remove) match
@@ -80,31 +80,31 @@ class Palace private {
   }
 
   /**
-   * Deallocates the given entity if it is currently allocated.
-   * If the entity is deallocated, its corresponding entry in the `meta` array is set to None.
+   * Deallocates the given Disciple if it is currently allocated.
+   * If the Disciple is deallocated, its corresponding entry in the `meta` array is set to None.
    *
-   * @param entity The entity to deallocate.
-   * @return True if the entity was deallocated, false otherwise.
+   * @param disciple The Disciple to deallocate.
+   * @return True if the Disciple was deallocated, false otherwise.
    */
-  def exile(entity: Disciple): Boolean = {
-    if this.isActive(entity) then
-      this.entries.update(entity.id, Entry.Exiled(entity.gen + 1))
-      this.exiled.addOne(entity.id)
-      this.meta.update(entity.id, None)
+  def exile(disciple: Disciple): Boolean = {
+    if this.isActive(disciple) then
+      this.entries.update(disciple.id, Entry.Exiled(disciple.gen + 1))
+      this.exiled.addOne(disciple.id)
+      this.meta.update(disciple.id, None)
       true
     else
       false
   }
 
   /**
-   * Determines whether the given entity is currently allocated and has the correct generation number.
+   * Determines whether the given Disciple is currently allocated and has the correct generation number.
    *
-   * @param entity The entity to check.
-   * @return True if the entity is currently allocated and has the correct generation number, false otherwise.
+   * @param disciple The Disciple to check.
+   * @return True if the Disciple is currently allocated and has the correct generation number, false otherwise.
    */
-  private def isActive(entity: Disciple): Boolean = {
-    this.entries(entity.id) match {
-      case Entry.Recruited(gen) => gen == entity.gen
+  private def isActive(disciple: Disciple): Boolean = {
+    this.entries(disciple.id) match {
+      case Entry.Recruited(gen) => gen == disciple.gen
       case Entry.Exiled(_) => false
     }
   }
