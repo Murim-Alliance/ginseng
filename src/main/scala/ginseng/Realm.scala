@@ -1,10 +1,12 @@
 package ginseng
 
+import scala.collection.View
 import scala.reflect.ClassTag
 
 object Realm {
 	def apply() = new Realm()
 }
+
 class Realm {
 	/**
 	 * TODO
@@ -21,11 +23,23 @@ class Realm {
 	 */
 	private val emperor = Emperor()
 
+	def query[R <: NonEmptyTuple, F <: Tuple](): Array[R] = {
+		// find the tables that contain all R but filter on F
+		// (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
+		// now we know which tables we have to get
+		// get the list of the tables,
+		// Consider List[R'] where R' is R prime
+		// R' is a List for which the element is a tuple of which each element is a list of the type in tuple R
+		// Now just provide a way to iterate over it or something
+
+		???
+	}
+
 	/**
 	 * TODO
 	 *
 	 * @param disciple TODO
-	 * @param t TODO
+	 * @param t        TODO
 	 * @tparam T TODO
 	 */
 	def setScrollOnDisciple[T: ClassTag](disciple: Disciple, t: T): Unit = {
@@ -44,16 +58,26 @@ class Realm {
 
 	/**
 	 * TODO
+	 */
+	def spawn(): Disciple = {
+		// Disciple(0, 0) is already hardcoded to be the disciple disciple
+		val newDisciple = palace.recruit()
+		emperor.placeNewDisciple(disciple = newDisciple, metas = palace.metas)
+		newDisciple
+	}
+
+	/**
+	 * TODO
 	 *
 	 * @param disciple TODO
-	 * @param tag TODO
+	 * @param tag      TODO
 	 */
 	def setTagOnDisciple(disciple: Disciple, tag: Disciple): Unit = {
 
 		// check if disciple is alive
 		if !palace.isActive(disciple) then return
 		else {
-		// Unit value because it's a tag
+			// Unit value because it's a tag
 			emperor.teachScrollToDisciple(disciple = disciple, scroll = (), scrollId = tag, palace.metas)
 		}
 	}
@@ -62,7 +86,7 @@ class Realm {
 	 * TODO
 	 *
 	 * @param disciple TODO
-	 * @param tag TODO
+	 * @param tag      TODO
 	 * @tparam T TODO
 	 */
 	def unsetTagOnDisciple[T](disciple: Disciple, tag: Disciple): Unit = {
@@ -107,15 +131,4 @@ class Realm {
 		val (sect, hall): (Sect, HallId) = palace.metas(disciple.id).get
 		sect.getScrollValue(scrollId, hall).map(_.asInstanceOf[T])
 	}
-	/**
-	 * TODO
-	 */
-	def spawn(): Disciple = {
-		// Disciple(0, 0) is already hardcoded to be the disciple disciple
-		val newDisciple = palace.recruit()
-		emperor.placeNewDisciple(disciple = newDisciple, metas = palace.metas)
-		newDisciple
-	}
-
-
 }
