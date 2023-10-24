@@ -4,17 +4,18 @@ import org.scalactic.Prettifier.default
 import org.scalatest.funsuite.AnyFunSuite
 
 class RealmTest extends AnyFunSuite {
-	test("ez pz testy squeezy") {
-		val realm = Realm()
+    test("ez pz testy squeezy") {
+        val realm = Realm()
 
-		val d1 = realm.spawn()
-		val d2 = realm.spawn()
-		realm.setScrollOnDisciple(d1, this)
-		realm.setScrollOnDisciple(d2, d1)
-		//		realm.getScrollFromDisciple(d1).get.setScrollOnDisciple(d1, "")
+        val d1 = realm.reincarnate()
+        val d2 = realm.reincarnate()
 
-		//		assert(realm.getScrollFromDisciple[String](d1).get == "")
-		assert(realm.getScrollFromDisciple[String](d2).isEmpty)
-		assert(realm.getScrollFromDisciple[Disciple](d2).get == d1)
-	}
+        realm.teachElementalScroll[Int](d1, 2)
+        realm.teachElementalScroll(d1, this)
+        realm.teachMartialScroll(d2, d1)
+
+        assert(realm.inquireElementalKnowledge[Int](d1).get == 2)
+        assert(realm.inquireElementalKnowledge[String](d2).isEmpty)
+        assert(realm.inquireMartialKnowledge(d2, d1) == true)
+    }
 }

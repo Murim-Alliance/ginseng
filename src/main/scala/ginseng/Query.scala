@@ -1,10 +1,17 @@
 package ginseng
 
 object Query {
-	def apply[R <: NonEmptyTuple, F <: Tuple]() = new Query[R, F]()
+
+    /**
+     * TODO
+     *
+     * @return TODO
+     */
+    def apply[R <: NonEmptyTuple, F <: Tuple]() = new Query[R, F]()
 
 }
 
-class Query[R <: NonEmptyTuple, F <: Tuple] {
-
-}
+/**
+ * TODO
+ */
+class Query[R <: NonEmptyTuple, F <: Tuple] {}

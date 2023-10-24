@@ -1,18 +1,17 @@
 package ginseng
 
-/**
- * TODO
- */
 object Disciple {
-	/**
-	 * TODO
-	 */
-	val DiscipleScrollId: Disciple = Disciple(0, 0)
 
-	/**
-	 * TODO
-	 */
-	implicit val discipleOrdering: Ordering[Disciple] = (x: Disciple, y: Disciple) => x.id.compareTo(y.id)
+    /**
+     * The Disciple that represents the Entity(0, 0).
+     */
+    val DiscipleScrollId: Disciple = Disciple(0, 0)
+
+    /**
+     * Ordering for Disciples.
+     * Disciples are ordered by their unique identifier.
+     */
+    implicit val discipleOrdering: Ordering[Disciple] = (x: Disciple, y: Disciple) => x.id.compareTo(y.id)
 }
 
 /**

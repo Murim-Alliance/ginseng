@@ -1,169 +1,159 @@
 package ginseng
 
-import scala.collection.{immutable, mutable}
+import scala.collection.immutable
+import scala.collection.mutable
 
-/**
- * TODO
- */
 object Emperor {
-	/**
-	 * TODO
-	 *
-	 * @return TODO
-	 */
-	def apply(): Emperor = {
-		val sects = mutable.ArrayBuffer[Sect]()
-		val sect1 = Sect().extendWith(Disciple(0, 0))
-		sects.addOne(sect1)
-		sect1.pushValue(Disciple.DiscipleScrollId, Disciple.DiscipleScrollId)
-		val scrolls = mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]()
-		scrolls.addOne(sect1.exposeScrollIds)
 
-		new Emperor(sects, scrolls)
-	}
+    /**
+     * Creates a new Emperor with the Disciple(0, 0) reserved.
+     * This Disciple is the "Disciple Scroll" that is used to represent Disciples that don't have any Scrolls.
+     *
+     * @return a new instance of Emperor with the Disciple(0, 0) reserved.
+     */
+    def apply(): Emperor = {
+        val sects = mutable.ArrayBuffer[Sect]()
+        val sect1 = Sect().extendWith(Disciple(0, 0))
+        sects.addOne(sect1)
+        sect1.pushValue(Disciple.DiscipleScrollId, Disciple.DiscipleScrollId)
+        val scrolls = mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]()
+        scrolls.addOne(sect1.exposeScrollIds)
+
+        new Emperor(sects, scrolls)
+    }
 }
 
 /**
- * TODO
+ * A Emperor defines functionality to interact with collections of Sects.
+ * The Emperor has the power to assign new Disciples, teach Scrolls to Disciples, and retire Scrolls from Disciples.
  *
- * @param sects     TODO
- * @param scrollIds TODO
+ * @param sects     the Sects the Emperor manages.
+ * @param scrollIds the ScrollIds of the Sects the Emperor manages.
  */
-private[ginseng] class Emperor private
-(
-	private val sects: mutable.ArrayBuffer[Sect],
-	private val scrollIds: mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]
+private[ginseng] class Emperor private (
+    private val sects: mutable.ArrayBuffer[Sect],
+    private val scrollIds: mutable.ArrayBuffer[immutable.TreeSet[ScrollId]]
 ) {
 
-	/**
-	 * TODO
-	 *
-	 * @param disciple TODO
-	 * @param metas    TODO
-	 */
-	def placeNewDisciple(disciple: Disciple, metas: mutable.ArrayBuffer[Option[(Sect, HallId)]]): Unit = {
-		// Assumes disciple is valid and correct gen
-		val sectReference = sects(0)
-		val hall = sectReference.headCount()
-		metas.update(disciple.id, Some((sectReference, hall)))
+    /**
+     * Assigns a new Disciple to be managed by the Emperor.
+     * The Disciple will first be assigned to the Sect(0), under the "Disciple Scroll".
+     *
+     * NOTE: Assumes that the Disciple is valid and has the correct generation.
+     * NOTE: Assumes that the first Sect exists and teaches only the "Disciple Scroll".
+     *
+     * @param disciple
+     * @param metas
+     */
+    def assignNew(disciple: Disciple, metas: mutable.ArrayBuffer[Option[(Sect, HallId)]]): Unit = {
+        val sectReference = sects(0)
+        val hall          = sectReference.headCount()
+        metas.update(disciple.id, Some((sectReference, hall)))
 
-		// Add it in the first table which is guaranteed to exist and be only the disciple scroll
-		sects(0).pushValue(Disciple.DiscipleScrollId, disciple)
-	}
+        sects(0).pushValue(Disciple.DiscipleScrollId, disciple)
+    }
 
-	/**
-	 * TODO
-	 *
-	 * @param disciple TODO
-	 * @param scrollId TODO
-	 * @param metas    TODO
-	 */
-	def forgetScrollForDisciple(disciple: Disciple, scrollId: ScrollId, metas: Metas): Unit = {
-		// invariant, check before calling if disciple is active so this doesn't mess up
-		// should be Some so don't check
-		val (sect, hall): (Sect, HallId) = metas(disciple.id).get
+    /**
+     * Retires a Scroll from a Disciple, meaning that the Disciple will no longer be taught the Scroll.
+     *
+     * NOTE: Assumes that the Disciple is active.
+     *
+     * @param disciple
+     * @param scrollId
+     * @param metas
+     */
+    def retireScroll(disciple: Disciple, scrollId: ScrollId, metas: Metas): Unit = {
+        val (sect, hall): (Sect, HallId) = metas(disciple.id).get
 
-		// now find where to transfer it to by getting the TreeSet[ScrollId], adding the given scrollId
-		// and then search for it
-		val nextSectScrolls = sect.exposeScrollIds.excl(scrollId)
+        // Obtain the Scrolls that should be taught to the Disciple after the Scroll is retired.
+        val nextSectScrolls = sect.exposeScrollIds.excl(scrollId)
 
-		// check if the sect to transfer the disciple to already exists
-		scrollIds.indexOf(nextSectScrolls) match {
-			case -1 =>
-				// create new sect
-				val newSect = sect.reduceWith(scrollId)
-				sects.addOne(newSect)
-				scrollIds.addOne(nextSectScrolls)
+        // Check if the Sect to transfer the Disciple to already exists.
+        scrollIds.indexOf(nextSectScrolls) match {
+            case -1 =>
+                // Sect doesn't exist yet, create the Sect based on the Sect we got from the Disciple.
+                val newSect = sect.reduceWith(scrollId)
+                sects.addOne(newSect)
+                scrollIds.addOne(nextSectScrolls)
 
-				sect.lossyTransferHallTo(newSect, hall)
-				metas.update(disciple.id, Some(newSect, 0))
-			case i =>
-				// know where to transfer it to
-				val destinationSect = sects(i)
-				if (sect ne destinationSect) {
-					// transfer it and edit meta
-					val newHall = sect.headCount()
-					sect.lossyTransferHallTo(destinationSect, hall)
-					metas.update(disciple.id, Some(destinationSect, newHall))
-				}
-				else {
-					// don't do shit
-				}
-		}
-	}
+                // Transfer the Disciple to the new Sect.
+                sect.lossyTransferHallTo(newSect, hall)
+                metas.update(disciple.id, Some(newSect, 0))
+            case i =>
+                // Sect exists, transfer Disciple to it and edit the meta.
+                val destinationSect = sects(i)
+                if (sect ne destinationSect) {
+                    // It's a different Sect, so do the transfer.
+                    val newHall = sect.headCount()
+                    sect.lossyTransferHallTo(destinationSect, hall)
+                    metas.update(disciple.id, Some(destinationSect, newHall))
+                } else {
+                    // Don't do anything, since the Disciple is already in the Sect.
+                }
+        }
+    }
 
-	/**
-	 * TODO
-	 *
-	 * @param disciple TODO
-	 * @param scroll   TODO
-	 * @param scrollId TODO
-	 * @param metas    TODO
-	 */
-	def teachScrollToDisciple(disciple: Disciple, scroll: Any, scrollId: ScrollId, metas: Metas): Unit = {
-		// invariant, check before calling if disciple is active so this doesn't mess up
-		// should be Some so don't check
-		val (sect, hall): (Sect, HallId) = metas(disciple.id).get
-		// now find where to transfer it to by getting the TreeSet[ScrollId], adding the given scrollId
-		// and then search for it
-		val nextSectScrolls = sect.exposeScrollIds.incl(scrollId)
+    /**
+     * Teaches a Scroll to a Disciple, meaning that the Disciple will be taught the Scroll.
+     *
+     * NOTE: Assumes that the Disciple is active.
+     *
+     * @param disciple  the Disciple to teach the Scroll to.
+     * @param scroll    the Scroll to teach to the Disciple.
+     * @param scrollId  the ScrollId of the Scroll to teach to the Disciple.
+     * @param metas     the metadata of the Disciples.
+     */
+    def teachScroll(disciple: Disciple, scroll: Any, scrollId: ScrollId, metas: Metas): Unit = {
+        val (sect, hall): (Sect, HallId) = metas(disciple.id).get
 
-		// check if the sect to transfer the disciple to already exists
-		scrollIds.indexOf(nextSectScrolls) match {
-			case -1 =>
-				// sect doesn't exist yet, create the sect based on the sect we got from the disciple
-				// extend the sect we know that the disciple is in with the scroll we want to add
-				val newSect = sect.extendWith(scrollId)
+        // Obtain the Scrolls that should be taught to the Disciple after the Scroll is taught.
+        val nextSectScrolls = sect.exposeScrollIds.incl(scrollId)
 
-				// now add it to the emperors knowledge
-				sects.addOne(newSect)
+        // Check if the Sect to transfer the Disciple to already exists.
+        scrollIds.indexOf(nextSectScrolls) match {
+            case -1 =>
+                // Sect doesn't exist yet, create the Sect based on the Sect we got from the Disciple.
+                val newSect = sect.extendWith(scrollId)
+                sects.addOne(newSect)
+                scrollIds.addOne(nextSectScrolls)
 
-				// also add the set of the scrolls so that we can find it in the future
-				scrollIds.addOne(nextSectScrolls)
+                // Transfer the Disciple to the new Sect.
+                sect.lossyTransferHallTo(newSect, hall)
 
+                // Since newSect should have no elements and also have no gaps, we know that the we can just push it onto the array.
+                newSect.pushValue(scrollId, scroll)
 
-				// transfer disciple to the new sect, from the hall of the current sect
-				sect.lossyTransferHallTo(newSect, hall)
+                // We know that the Hall must be 0 because the Sect is unpopulated since we just made it.
+                metas.update(disciple.id, Some((newSect, 0)))
+            case i =>
+                // Sect exists, transfer Disciple to it and edit the meta.
+                val destinationSect = sects(i)
 
-				// now ensure the added scroll is there, push value will push into
-				// the array of the newSect so it doesn't insert
-				// Since newSect should have no elements and also have no gaps,
-				// we know that the we can just push it onto the array
-				newSect.pushValue(scrollId, scroll)
+                // Check if the Sect is the same as the Sect the Disciple is currently in.
+                if (sect ne destinationSect) {
+                    // It's a different Sect, so do the transfer.
 
-				// edit meta
-				// we know the hall/row = 0 because the sect is unpopulated since we just made it
-				metas.update(disciple.id, Some((newSect, 0)))
-			case i =>
-				// sect exists, add disciple to it and edit the meta
-				val destinationSect = sects(i)
+                    // Because we know there are no gaps, we know that the headCount will be the index of the Hall the Disciple is transferred to.
+                    // NOTE: ArrayBuffers are 0-indexed, so we don't need to subtract 1.
+                    val newHall = destinationSect.headCount()
 
-				// first check if  src != dst
-				if (sect ne destinationSect) {
-					// it's a different sect so do the transfer
+                    // Transfer the Disciple to the new Sect.
+                    sect.lossyTransferHallTo(destinationSect, hall)
 
-					// note down the row it will be in which is the length since there are no gaps
-					// arrays are 0-indexed so if we get headcount before transfer it is the corresponding
-					// index of where it is transferred to
-					val newHall = destinationSect.headCount()
+                    // Push the Scroll onto the new Sect.
+                    // We only have to provide the value that the destination Sect doesn't have,
+                    // since we know the destination has transferred all the other Scroll values.
+                    // NOTE: This should never fail, since we already confirmed that the destination Sect has the Scroll/ScrollId.
+                    destinationSect.pushValue(scrollId, scroll)
 
-					// transfer it to the destination which is an already existing sect
-					sect.lossyTransferHallTo(destinationSect, hall)
+                    // Update the meta to reflect the new Sect and Hall.
+                    metas.update(disciple.id, Some((destinationSect, newHall)))
+                } else {
+                    // It's the same Sect, so just update the value.
+                    sect.replaceScrollValue(scrollId, scroll, hall)
 
-					// since the transfer only transfers value that were in the old sect
-					// we need to provide the value that destination won't have
-					// there we just push it and match it by the scrollId
-					// since we already confirmed the destination has the Scroll/ScrollId
-					// this should *never* fail
-					destinationSect.pushValue(scrollId, scroll)
-
-					// edit the meta
-					metas.update(disciple.id, Some((destinationSect, newHall)))
-				} else {
-					// just update the value
-					sect.replaceScrollValue(scrollId, scroll, hall)
-					// don't need to update the meta since we only updated the value an not the row/hall or sect/table
-				}
-		}
-	}
+                    // We don't need to update the meta since we only updated the value and not the Hall or Sect.
+                }
+        }
+    }
 }
