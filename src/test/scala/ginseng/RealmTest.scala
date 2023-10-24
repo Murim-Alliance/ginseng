@@ -16,6 +16,6 @@ class RealmTest extends AnyFunSuite {
 
         assert(realm.inquireElementalKnowledge[Int](d1).get == 2)
         assert(realm.inquireElementalKnowledge[String](d2).isEmpty)
-        assert(realm.inquireMartialKnowledge(d2, d1) == true)
+        assert(realm.inquireMartialKnowledge(d2, d1))
     }
 }
