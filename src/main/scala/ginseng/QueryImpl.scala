@@ -10,7 +10,10 @@ import scala.reflect.ClassTag
  * @tparam Search TODO
  * @tparam Filter TODO
  */
-type Query[Search, Filter] = QueryImpl[MakeTuple[Search], MakeTuple[Filter]]
+type Query[Search, Filter] = Filter match {
+    case None.type => Query[Search, With[Disciple]]
+    case _         => QueryImpl[MakeTuple[Search], MakeTuple[Filter]]
+}
 
 /**
  * TODO
