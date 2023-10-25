@@ -20,10 +20,10 @@ trait Moogli[T] {
 }
 
 object Moogli:
-    given Moogli[Without[_]] with {
+    given [S]: Moogli[Without[S]] with {
         override def create(teacherId: TeacherId): BoolLogic = Not(teacherId)
     }
-    given Moogli[With[_]] with {
+    given [S]: Moogli[With[S]] with {
         override def create(teacherId: TeacherId): BoolLogic = And(teacherId)
     }
 

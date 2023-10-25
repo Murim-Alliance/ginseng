@@ -1,7 +1,5 @@
 package ginseng
 
-import scala.collection.mutable
-import scala.collection.BitSet
 import scala.reflect.ClassTag
 
 object Realm {
@@ -45,7 +43,7 @@ class Realm private {
      * @tparam Q TODO
      * @return an Array of Scrolls of type R, but not of type F, which is indexed by DiscipleId.
      */
-    def query[S <: Tuple: TypeListEncoder, F <: Tuple: TypeListEncoder : FilterEncoder, Q <: QueryImpl[S, F]](): Unit = {
+    def query[S <: Tuple: TypeListEncoder, F <: Tuple: FilterEncoder: TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
         // find the tables that contain all R but filter on F
         // (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
         // now we know which tables we have to get
