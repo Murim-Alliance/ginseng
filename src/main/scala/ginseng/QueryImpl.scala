@@ -24,30 +24,6 @@ type MakeTuple[T] = T match {
 
 /**
  * TODO
- */
-trait Filter {}
-
-/**
- * TODO
- */
-class Unfiltered extends Filter {}
-
-/**
- * TODO
- *
- * @tparam T TODO
- */
-class With[T] extends Filter
-
-/**
- * TODO
- *
- * @tparam T TODO
- */
-class Without[T] extends Filter
-
-/**
- * TODO
  *
  * @param extraFilter TODO
  * @tparam S TODO
@@ -71,7 +47,7 @@ trait TypeListEncoder[T] {
      * @param registry TODO
      * @return TODO
      */
-    def encodeTypeList(registry: TypeMap[Disciple]): Vector[Option[Disciple]]
+    def encodeTypeList(registry: TypeMap[TeacherId]): Vector[Option[TeacherId]]
 }
 
 /**
@@ -83,15 +59,16 @@ object TypeListEncoder {
      * TODO: Base case
      */
     given TypeListEncoder[EmptyTuple] with {
-        final def encodeTypeList(registry: TypeMap[Disciple]): Vector[Option[Disciple]] = Vector.empty[Option[Disciple]]
+        final def encodeTypeList(registry: TypeMap[TeacherId]): Vector[Option[TeacherId]] =
+            Vector.empty[Option[TeacherId]]
     }
 
     /**
      * TODO: Inductive case
      */
-    given [H: ClassTag, T <: Tuple: TypeListEncoder]: TypeListEncoder[H *: T] with {
-
-        final def encodeTypeList(registry: TypeMap[Disciple]): Vector[Option[Disciple]] =
-            Vector(registry.getValue[H]) ++ summon[TypeListEncoder[T]].encodeTypeList(registry)
+    given [S: ClassTag, H[_] <: View[_], T <: Tuple: TypeListEncoder]: TypeListEncoder[H[S] *: T] with {
+        final def encodeTypeList(registry: TypeMap[TeacherId]): Vector[Option[TeacherId]] = {
+            Vector(registry.getValue[S]) ++ summon[TypeListEncoder[T]].encodeTypeList(registry)
+        }
     }
 }

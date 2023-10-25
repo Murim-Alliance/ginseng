@@ -17,11 +17,11 @@ class PatriarchTest extends AnyFunSuite {
         val alliance  = Alliance()
 
         val disciple = alliance.recruit()
-        val sifu     = alliance.recruit()
+        val teacher     = alliance.recruit()
 
         patriarch.subjugate(disciple = disciple, metas = alliance.metas)
-        patriarch.subjugate(disciple = sifu, metas = alliance.metas)
+        patriarch.subjugate(disciple = teacher, metas = alliance.metas)
 
-        patriarch.makeReceive(sifu = sifu, disciple = disciple, knowledge = "Cheese", metas = alliance.metas)
+        patriarch.makeReceive(teacher = teacher, disciple = disciple, knowledge = "Cheese", metas = alliance.metas)
     }
 }

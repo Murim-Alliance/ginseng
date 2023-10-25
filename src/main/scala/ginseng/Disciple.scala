@@ -3,9 +3,9 @@ package ginseng
 object Disciple {
 
     /**
-     * The Ancestor Sifu that represents the Entity(0, 0).
+     * The Ancestor Teacher that represents the Entity(0, 0).
      */
-    val AncestorSifuId: Disciple = Disciple(0, 0)
+    val AncestorTeacherId: Disciple = Disciple(0, 0)
 
     /**
      * Ordering for Disciples.

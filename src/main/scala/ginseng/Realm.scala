@@ -1,5 +1,7 @@
 package ginseng
 
+import scala.collection.mutable
+import scala.collection.BitSet
 import scala.reflect.ClassTag
 
 object Realm {
@@ -9,7 +11,7 @@ object Realm {
      *
      * @return a new instance of Realm with the Disciple(0, 0) reserved.
      */
-    def apply() = new Realm()
+    def apply(): Realm = new Realm()
 }
 
 /**
@@ -18,7 +20,7 @@ object Realm {
  * The Alliance is responsible for allocating and deallocating Disciples.
  * The Alliance also stores the location of each Disciple in a Sect and the Sect it belongs to.
  */
-class Realm {
+class Realm private {
 
     /**
      * Defines a unique Disciple for each type.
@@ -43,7 +45,7 @@ class Realm {
      * @tparam Q TODO
      * @return an Array of Scrolls of type R, but not of type F, which is indexed by DiscipleId.
      */
-    def query[S <: Tuple: TypeListEncoder, F <: Tuple: TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
+    def query[S <: Tuple: TypeListEncoder, F <: Tuple: TypeListEncoder : FilterEncoder, Q <: QueryImpl[S, F]](): Unit = {
         // find the tables that contain all R but filter on F
         // (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
         // now we know which tables we have to get
@@ -58,13 +60,16 @@ class Realm {
         val mappedDisciple = discipleList.flatten
         if initialLength != mappedDisciple.length then return
         else ()
-        discipleList.foreach(println(_))
+
+        val filterList = summon[TypeListEncoder[F]].encodeTypeList(registry)
+        // For each element in the vector, wrap it in the appropriate filter
+        summon[FilterEncoder[F]].encodeFilter(filterList).foreach(println)
 
         // TODO
     }
 
     /**
-     * Teaches an Knowledge to a Disciple, by hiring a new Sifu to teach it.
+     * Teaches an Knowledge to a Disciple, by hiring a new Teacher to teach it.
      *
      * @param disciple  the Disciple to teach the Knowledge to.
      * @param knowledge the Knowledge to teach.
@@ -74,7 +79,7 @@ class Realm {
         // check if disciple is alive
         if !alliance.isRecruited(disciple) then return
 
-        val sifuId = registry.getValue[Type] match {
+        val teacherId = registry.getValue[Type] match {
             case Some(d1) => d1
             case None =>
                 val d1 = recruit()
@@ -82,7 +87,7 @@ class Realm {
                 d1
         }
 
-        patriarch.makeReceive(sifuId, disciple, knowledge, alliance.metas)
+        patriarch.makeReceive(teacherId, disciple, knowledge, alliance.metas)
     }
 
     /**
@@ -106,12 +111,12 @@ class Realm {
     def discontinue[Type: ClassTag](disciple: Disciple): Unit = {
         if !alliance.isRecruited(disciple) then ()
         else {
-            val sifuId = registry.getValue[Type] match {
+            val teacherId = registry.getValue[Type] match {
                 case Some(d1) => d1
                 case None     => return
             }
 
-            patriarch.makeDismiss(sifuId, disciple, alliance.metas)
+            patriarch.makeDismiss(teacherId, disciple, alliance.metas)
         }
     }
 
@@ -125,57 +130,57 @@ class Realm {
      */
     def inquire[Type: ClassTag](disciple: Disciple): Option[Type] = {
         if !alliance.isRecruited(disciple) then return None
-        val sifuId = registry.getValue[Type] match {
+        val teacherId = registry.getValue[Type] match {
             case Some(scroll) => scroll
             case None         => return None
         }
 
         // Must be some
         val (sect, hall): (Sect, HallId) = alliance.metas(disciple.id).get
-        sect.inquire(sifuId, hall).map(_.asInstanceOf[Type])
+        sect.inquire(teacherId, hall).map(_.asInstanceOf[Type])
     }
 
     /**
-     * Make a Sifu receive a Disciple.
+     * Make a Teacher receive a Disciple.
      *
-     * @param sifu     the Sifu to receive the Disciple.
+     * @param teacher     the Teacher to receive the Disciple.
      * @param disciple the Disciple to receive.
      */
-    def receive(sifu: SifuId, disciple: Disciple): Unit = {
+    def receive(teacher: Disciple, disciple: Disciple): Unit = {
 
         // check if disciple is alive
         if !alliance.isRecruited(disciple) then ()
         else
             // Unit value because it's a tag
-            patriarch.makeReceive(sifu, disciple, knowledge = (), alliance.metas)
+            patriarch.makeReceive(teacher, disciple, knowledge = (), alliance.metas)
     }
 
     /**
-     * Graduates a Disciple from their Sifu's teachings.
+     * Graduates a Disciple from their Teacher's teachings.
      *
-     * @param sifu     the Sifu to dismiss the Disciple.
+     * @param teacher     the Teacher to dismiss the Disciple.
      * @param disciple the Disciple dismiss
      */
-    def dismiss(sifu: SifuId, disciple: Disciple): Unit = {
+    def dismiss(teacher: Disciple, disciple: Disciple): Unit = {
         if !alliance.isRecruited(disciple) then ()
         else {
-            patriarch.makeDismiss(sifu, disciple, alliance.metas)
+            patriarch.makeDismiss(teacher, disciple, alliance.metas)
         }
     }
 
     /**
-     * Inquires about a Sifu/Disciple relationship.
+     * Inquires about a Teacher/Disciple relationship.
      *
-     * @param sifu     the Sifu.
+     * @param teacher     the Teacher.
      * @param disciple the Disciple.
-     * @return True if the Sifu is teaching the Disciple., False otherwise.
+     * @return True if the Teacher is teaching the Disciple., False otherwise.
      */
-    def inquire(sifu: SifuId, disciple: Disciple): Boolean = {
+    def inquire(teacher: Disciple, disciple: Disciple): Boolean = {
         if !alliance.isRecruited(disciple) then false
         else {
             // Must be some
             val (sect, hall): (Sect, HallId) = alliance.metas(disciple.id).get
-            sect.inquire(sifu, hall).isDefined
+            sect.inquire(teacher, hall).isDefined
         }
     }
 }
