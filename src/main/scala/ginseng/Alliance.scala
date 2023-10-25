@@ -3,7 +3,7 @@ package ginseng
 import scala.collection.mutable
 
 /**
- * Represents the state of an Disciple in the Palace.
+ * Represents the state of an Disciple in the Alliance.
  * Disciple can either be Recruited, meaning it is currently allocated.
  * If the Disciple is Exiled, the Disciple is currently not allocated, containing its next generation.
  */
@@ -18,15 +18,15 @@ private enum Entry {
  * It also stores the location of each Disciple in a Sect and the Sect it belongs to.
  * If an Disciple is not currently allocated, the value in here will be None.
  */
-object Palace {
+object Alliance {
 
     /**
-     * Creates a new Palace with the Entity(0, 0) reserved.
+     * Creates a new Alliance with the Entity(0, 0) reserved.
      *
      * @return
      */
-    def apply(): Palace = {
-        val allocator = new Palace()
+    def apply(): Alliance = {
+        val allocator = new Alliance()
         allocator.recruit()
         allocator
     }
@@ -40,7 +40,7 @@ type Metas = mutable.ArrayBuffer[Option[(Sect, HallId)]]
 /**
  * Manages Disciples and their data.
  */
-private[ginseng] class Palace private {
+private[ginseng] class Alliance private {
 
     /**
      * Stores the location of each Disciple in a Sect and the Sect it belongs to.
@@ -92,7 +92,7 @@ private[ginseng] class Palace private {
      * @return True if the Disciple was deallocated, false otherwise.
      */
     def exile(disciple: Disciple): Boolean = {
-        if this.isActive(disciple) then
+        if this.isRecruited(disciple) then
             this.entries.update(disciple.id, Entry.Exiled(disciple.gen + 1))
             this.exiled.addOne(disciple.id)
             this.metas.update(disciple.id, None)
@@ -106,7 +106,7 @@ private[ginseng] class Palace private {
      * @param disciple The Disciple to check.
      * @return True if the Disciple is currently allocated and has the correct generation number, false otherwise.
      */
-    def isActive(disciple: Disciple): Boolean = {
+    def isRecruited(disciple: Disciple): Boolean = {
         this.entries(disciple.id) match {
             case Entry.Recruited(gen) => gen == disciple.gen
             case Entry.Exiled(_)      => false

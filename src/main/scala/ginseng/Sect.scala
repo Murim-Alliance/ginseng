@@ -1,7 +1,6 @@
 package ginseng
 
-import scala.collection.immutable
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -10,9 +9,9 @@ import scala.collection.mutable.ArrayBuffer
 type HallId = Int
 
 /**
- * Type alias for ScrollId, which is a Disciple.
+ * Type alias for SifuId, which is a Disciple.
  */
-type ScrollId = Disciple
+type SifuId = Disciple
 
 /**
  * Type alias for a CourtyardId, which is an Int.
@@ -20,14 +19,19 @@ type ScrollId = Disciple
 opaque type CourtyardId = Int
 
 /**
- * Type alias for Courtyard, which is a mutable ArrayBuffer of type Any.
+ * Type alias for Knowledge, which is Any.
  */
-type Courtyard = mutable.ArrayBuffer[Any]
+type Knowledge = Any
 
 /**
- * Type alias for Courtyards, which represents the collection of Courtyards and the Scrolls that they teach.
+ * Type alias for Courtyard, which is a mutable ArrayBuffer of type Any.
  */
-type Courtyards = immutable.TreeMap[ScrollId, Courtyard]
+type Courtyard = mutable.ArrayBuffer[Knowledge]
+
+/**
+ * Type alias for Courtyards, which represents the collection of which Sifu teaches at which Courtyard
+ */
+type Courtyards = immutable.TreeMap[SifuId, Courtyard]
 
 /**
  * Companion object for the Sect class.
@@ -38,7 +42,7 @@ object Sect {
      * @return a new instance of Sect without any Courtyards.
      */
     def apply(): Sect = {
-        Sect(immutable.TreeMap[ScrollId, Courtyard]())
+        Sect(immutable.TreeMap[SifuId, Courtyard]())
     }
 
     /**
@@ -46,7 +50,7 @@ object Sect {
      * @return a new instance of Sect with the given Courtyards.
      */
     def apply(courtyards: Courtyards): Sect = {
-        val scrolls: immutable.TreeSet[ScrollId] = courtyards.keySet
+        val scrolls: immutable.TreeSet[SifuId] = courtyards.keySet
         new Sect(courtyards, scrolls)
     }
 }
@@ -59,7 +63,7 @@ object Sect {
  */
 private[ginseng] final class Sect(
     private val courtyards: Courtyards,
-    private val scrolls: immutable.TreeSet[ScrollId]
+    private val scrolls: immutable.TreeSet[SifuId]
 ) {
 
     /**
@@ -67,37 +71,37 @@ private[ginseng] final class Sect(
      *
      * @return an immutable indexed sequence of scroll ids.
      */
-    @inline def exposeScrollIds: immutable.TreeSet[ScrollId] = this.scrolls
+    @inline def sifus: immutable.TreeSet[SifuId] = this.scrolls
 
     /**
-     * Adds a new Courtyard which teaches this Scroll.
+     * Hires a Sifu to teach at a new Courtyard in the Sect.
      * The Courtyard is initialized with an empty ArrayBuffer.
      *
      * NOTE: Do not push the same column twice.
      *
-     * @param scrollId the Scroll to teach.
+     * @param sifuId the Sifu who teaches here
      * @return the Sect which additionally teaches the new Scroll.
      */
-    @inline def extendWith(scrollId: ScrollId): Sect =
-        Sect(typeCloneEmpty().updated(scrollId, mutable.ArrayBuffer.empty[Any]))
+    @inline def hire(sifuId: SifuId): Sect =
+        Sect(blueprint().updated(sifuId, mutable.ArrayBuffer.empty[Any]))
 
     /**
      * Returns the amount of Disciples in the first Courtyard.
      *
      * @return the amount of Disciples in the first Courtyard.
      */
-    @inline def headCount(): Int = courtyards(Disciple.DiscipleScrollId).length
+    @inline def headCount(): Int = courtyards(Disciple.AncestorSifuId).length
 
     /**
-     * Makes a Sect stop practicing the given Scroll.
+     * Retire a Sifu from their position, abolishing their Courtyard.
      *
      * NOTE: Do not reduce Courtyards that do not contain the Scroll.
      *
-     * @param scrollId the Scroll to stop practicing.
-     * @return a Sect that is not practicing the Scroll.
+     * @param sifuId the Sifu to retire.
+     * @return a Sect where the Sifu does not teach at.
      */
-    @inline def reduceWith(scrollId: ScrollId): Sect =
-        Sect(typeCloneEmpty().removed(scrollId))
+    @inline def retire(sifuId: SifuId): Sect =
+        Sect(blueprint().removed(sifuId))
 
     /**
      * Creates a type clone of the Sect's Courtyards.
@@ -105,85 +109,84 @@ private[ginseng] final class Sect(
      *
      * @return an empty type clone of the Sect's Courtyards.
      */
-    @inline private def typeCloneEmpty(): Courtyards =
+    @inline private def blueprint(): Courtyards =
         this.courtyards.map(pair => (pair._1, mutable.ArrayBuffer[Any]()))(ordering = courtyards.ordering)
 
     /**
      * Lossy transfers a row from the current Sect to another Sect.
      *
-     * @param destinationSect the destination Sect.
      * @param hallId          the index of the Hall to transfer.
+     * @param destinationSect the destination Sect.
      */
-    def lossyTransferHallTo(destinationSect: Sect, hallId: HallId): Unit = {
+    def transferToOtherSect(hallId: HallId, destinationSect: Sect): Unit = {
         // Remove row in src
-        val row: Map[ScrollId, Any] = this.courtyards.iterator.map(p => (p._1, p._2.swapRemove(hallId))).toMap
+        val row: Map[SifuId, Any] = this.courtyards.iterator.map(p => (p._1, p._2.swapRemove(hallId))).toMap
 
         // Add to dst table
         destinationSect.courtyards.foreach(pair => {
             row.get(pair._1) match {
-                case Some(value) => destinationSect.pushValue(pair._1, value)
+                case Some(value) => destinationSect.induction(pair._1, value)
                 case None        => // implied reduction/lossy
             }
         })
     }
 
     /**
-     * Write a new value on a new instance of the Scroll taught at a Courtyard.
+     * Make a Sifu teach Knowledge to the newest Disciple.
      *
-     * NOTE: Assumed that ScrollId exist/is valid.
+     * NOTE: Assumed that SifuId exist/is valid.
      *
-     * @param scrollId the Scroll the Courtyard teaches.
-     * @param value    the value to write.
+     * @param sifuId    the Sifu to teach the Knowledge.
+     * @param knowledge the Knowledge to teach.
      */
-    @inline def pushValue(scrollId: ScrollId, value: Any): Unit =
-        courtyards.get(scrollId) match {
-            case Some(courtyard) => courtyard.addOne(value)
+    @inline def induction(sifuId: SifuId, knowledge: Knowledge): Unit =
+        courtyards.get(sifuId) match {
+            case Some(courtyard) => courtyard.addOne(knowledge)
             case None            => ???
         }
 
     /**
-     * Writes a value on the Scroll for a specific Hall.
-     * And thus, by extension, a specific Disciple.
+     * Make a Sifu tutor a specific disciple with some Knowledge.
      *
-     * @param scrollId the Scroll to change the value of.
-     * @param value    the value to set the value of the scroll to.
-     * @param hall     the specific hall to update the value for
+     * @param sifuId   the Sifu to teach the Knowledge.
+     * @param value    the new Knowledge to teach.
+     * @param hall     the Hall the disciple to tutor is at.
      */
-    @inline def replaceScrollValue(scrollId: ScrollId, value: Any, hall: HallId): Unit =
-        courtyards.get(scrollId) match {
+    @inline def tutor(sifuId: SifuId, value: Knowledge, hall: HallId): Unit =
+        courtyards.get(sifuId) match {
             case Some(courtyard) => courtyard.update(hall, value)
             case None            => ???
         }
 
     /**
-     * Returns the value written on the Scroll for a specific Hall.
-     * And thus, by extension, a specific Disciple.
+     * Inquire the Knowledge the Sifu is currently teaching to a Disciple.
      *
-     * @param scrollId the Scroll to get the value of.
-     * @param hallId   the specific hall to get the value for
-     * @return the value written on the Scroll for a specific Hall.
+     * @param sifuId   a Sifu who teaches at the Sect.
+     * @param hallId   the specific hall of the Disciple to inquire about.
+     * @return         the Knowledge the Sifu is teacher the Disciple.
      */
-    @inline def getScrollValue(scrollId: ScrollId, hallId: HallId): Option[Any] =
-        courtyards.get(scrollId).map(_(hallId))
+    @inline def inquire(sifuId: SifuId, hallId: HallId): Option[Any] =
+        courtyards.get(sifuId).map(_(hallId))
 
     /**
-     * Dumps the Hall which will automatically deallocate it.
-     * This should only be done if the Disciple is being deallocated.
-     * Meta should also be cleared.
+     * Exiles the Disciple in the Hall.
+     *
+     * NOTE: Dumps the Hall which will automatically deallocate it.
+     *       This should only be done if the Disciple is being deallocated.
+     *       Meta should also be cleared.
      *
      * @param hallId the hall to dump.
      */
-    @inline def dumpHall(hallId: HallId): Unit =
+    @inline def exile(hallId: HallId): Unit =
         this.courtyards.foreach(_._2.swapRemove(hallId))
 
     /**
-     * Check if a Courtyard exist in the Sect that teaches the given Scroll.
-     * e.g. Checks if the Sect practices the given Scroll.
+     * Check if the Sect has a Courtyard where a specific Sifu teaches at.
      *
-     * @param scrollId the scroll to check.
-     * @return True if a Courtyard teaches the given Scroll, False otherwise.
+     * @param sifuId the Sifu to check for.
+     * @return True if a Courtyard exists, False otherwise.
      */
-    @inline def hasCourtyard(scrollId: ScrollId): Boolean = this.courtyards.contains(scrollId)
+    @inline def hasCourtyard(sifuId: SifuId): Boolean = this.courtyards.contains(sifuId)
 }
 
 extension (array: Courtyard)

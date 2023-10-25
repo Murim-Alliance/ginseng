@@ -14,7 +14,7 @@ private[ginseng] final class TypeMap[V] {
     /**
      * The inner map that associates a value of type `V` with a class of type `K`.
      */
-    private val inner = mutable.HashMap[ClassTag[_], V]();
+    private val inner = mutable.HashMap[ClassTag[_], V]()
 
     /**
      * Registers a value of type `V` for the class `K`.

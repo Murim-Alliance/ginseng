@@ -4,18 +4,26 @@ import org.scalactic.Prettifier.default
 import org.scalatest.funsuite.AnyFunSuite
 
 class RealmTest extends AnyFunSuite {
-    test("ez pz testy squeezy") {
+    test("Realm: Teach") {
         val realm = Realm()
 
-        val d1 = realm.reincarnate()
-        val d2 = realm.reincarnate()
+        val d1 = realm.recruit()
+        val d2 = realm.recruit()
 
-        realm.teachElementalScroll[Int](d1, 2)
-        realm.teachElementalScroll(d1, this)
-        realm.teachMartialScroll(d2, d1)
+        realm.teach[Int](disciple = d1, 2)
 
-        assert(realm.inquireElementalKnowledge[Int](d1).get == 2)
-        assert(realm.inquireElementalKnowledge[String](d2).isEmpty)
-        assert(realm.inquireMartialKnowledge(d2, d1))
+        assert(realm.inquire[Int](disciple = d1).get == 2)
+        assert(realm.inquire[Int](disciple = d2).isEmpty)
+    }
+
+    test("Realm: Receive") {
+        val realm = Realm()
+
+        val d1 = realm.recruit()
+        val d2 = realm.recruit()
+
+        realm.receive(sifu = d2, disciple = d1)
+
+        assert(realm.inquire(sifu = d2, disciple = d1))
     }
 }

@@ -4,186 +4,178 @@ import scala.reflect.ClassTag
 
 object Realm {
 
-	/**
-	 * Creates a new Realm with the Disciple(0, 0) reserved.
-	 *
-	 * @return a new instance of Realm with the Disciple(0, 0) reserved.
-	 */
-	def apply() = new Realm()
+    /**
+     * Creates a new Realm with the Disciple(0, 0) reserved.
+     *
+     * @return a new instance of Realm with the Disciple(0, 0) reserved.
+     */
+    def apply() = new Realm()
 }
 
 /**
  * A Realm defines functionality to interact with collections of Disciples.
- * This is done through the use of Scrolls, which can be taught to Disciples through the Emperor.
- * The Palace is responsible for allocating and deallocating Disciples.
- * The Palace also stores the location of each Disciple in a Sect and the Sect it belongs to.
+ * This is done through the use of Scrolls, which can be taught to Disciples through the Patriarch.
+ * The Alliance is responsible for allocating and deallocating Disciples.
+ * The Alliance also stores the location of each Disciple in a Sect and the Sect it belongs to.
  */
 class Realm {
 
-	/**
-	 * Defines a unique Disciple for each type.
-	 */
-	private val registry = TypeMap[Disciple]()
+    /**
+     * Defines a unique Disciple for each type.
+     */
+    private val registry = TypeMap[Disciple]()
 
-	/**
-	 * Instance of the Palace.
-	 */
-	private val palace = Palace()
+    /**
+     * Instance of the Alliance of Sects.
+     */
+    private val alliance = Alliance()
 
-	/**
-	 * Instance of the Emperor.
-	 */
-	private val emperor = Emperor()
+    /**
+     * Instance of the Patriarch of the Alliance.
+     */
+    private val patriarch = Patriarch()
 
+    /**
+     * Queries the Realm for all Disciples that have Scrolls of type R but not of type F.
+     *
+     * @tparam S TODO
+     * @tparam F TODO
+     * @tparam Q TODO
+     * @return an Array of Scrolls of type R, but not of type F, which is indexed by DiscipleId.
+     */
+    def query[S <: Tuple: TypeListEncoder, F <: Tuple: TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
+        // find the tables that contain all R but filter on F
+        // (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
+        // now we know which tables we have to get
+        // get the list of the tables,
+        // Consider List[R'] where R' is R prime
+        // R' is a List for which the element is a tuple of which each element is a list of the type in tuple R
+        // Now just provide a way to iterate over it or something
 
+        val discipleList = summon[TypeListEncoder[S]].encodeTypeList(registry)
 
-	/**
-	 * Queries the Realm for all Disciples that have Scrolls of type R but not of type F.
-	 *
-	 * @tparam S TODO
-	 * @tparam F TODO
-	 * @tparam Q TODO
-	 * @return an Array of Scrolls of type R, but not of type F, which is indexed by DiscipleId.
-	 */
-	def query[S <: Tuple : TypeListEncoder, F <: Tuple : TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
-		// find the tables that contain all R but filter on F
-		// (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
-		// now we know which tables we have to get
-		// get the list of the tables,
-		// Consider List[R'] where R' is R prime
-		// R' is a List for which the element is a tuple of which each element is a list of the type in tuple R
-		// Now just provide a way to iterate over it or something
+        val initialLength  = discipleList.length
+        val mappedDisciple = discipleList.flatten
+        if initialLength != mappedDisciple.length then return
+        else ()
+        discipleList.foreach(println(_))
 
-		val discipleList = summon[TypeListEncoder[S]].encodeTypeList(registry)
+        // TODO
+    }
 
-		val initialLength = discipleList.length
-		val mappedDisciple = discipleList.flatten
-		if initialLength != mappedDisciple.length then return else ()
-		discipleList.foreach(println(_))
+    /**
+     * Teaches an Knowledge to a Disciple, by hiring a new Sifu to teach it.
+     *
+     * @param disciple  the Disciple to teach the Knowledge to.
+     * @param knowledge the Knowledge to teach.
+     * @tparam Type the type of the Knowledge to teach.
+     */
+    def teach[Type: ClassTag](disciple: Disciple, knowledge: Type): Unit = {
+        // check if disciple is alive
+        if !alliance.isRecruited(disciple) then return
 
-		// TODO
-	}
+        val sifuId = registry.getValue[Type] match {
+            case Some(d1) => d1
+            case None =>
+                val d1 = recruit()
+                registry.register[Type](d1)
+                d1
+        }
 
-	/**
-	 * Teaches an Elemental Scroll to a Disciple.
-	 * An Element is any type that can be converted into a ClassTag.
-	 *
-	 * @param disciple the Disciple to teach the Scroll to.
-	 * @param value    the value of the Scroll to teach.
-	 * @tparam Element the type of the Scroll to teach.
-	 */
-	def teachElementalScroll[Element: ClassTag](disciple: Disciple, value: Element): Unit = {
-		// check if disciple is alive
-		if !palace.isActive(disciple) then return
+        patriarch.makeReceive(sifuId, disciple, knowledge, alliance.metas)
+    }
 
-		val scrollId = registry.getValue[Element] match {
-			case Some(d1) => d1
-			case None =>
-				val d1 = reincarnate()
-				registry.register[Element](d1)
-				d1
-		}
-		emperor.teachScroll(disciple, value, scrollId, palace.metas)
-	}
+    /**
+     * Recruits a new Disciple into the Alliance.
+     *
+     * @return the new Disciple.
+     */
+    def recruit(): Disciple = {
+        // Disciple(0, 0) is already hardcoded to be the disciple disciple
+        val newDisciple = alliance.recruit()
+        patriarch.subjugate(disciple = newDisciple, metas = alliance.metas)
+        newDisciple
+    }
 
-	/**
-	 * Retires an Elemental Scroll from a Disciple.
-	 * An Element is any type that can be converted into a ClassTag.
-	 *
-	 * @param disciple the Disciple to retire the Scroll from.
-	 * @param scrollId the Scroll to retire.
-	 * @tparam Element the type of the Scroll to retire.
-	 */
-	def retireElementalScroll[Element: ClassTag](disciple: Disciple, scrollId: ScrollId): Unit = {
-		if !palace.isActive(disciple) then ()
-		else {
-			val scrollId = registry.getValue[Element] match {
-				case Some(d1) => d1
-				case None => return
-			}
-			emperor.retireScroll(disciple, scrollId, palace.metas)
-		}
-	}
+    /**
+     * Discontinues the teaching of a certain type of Knowledge to the Disciple.
+     *
+     * @param disciple the Disciple to discontinue teaching.
+     * @tparam Type the type of the Knowledge to discontinue teaching.
+     */
+    def discontinue[Type: ClassTag](disciple: Disciple): Unit = {
+        if !alliance.isRecruited(disciple) then ()
+        else {
+            val sifuId = registry.getValue[Type] match {
+                case Some(d1) => d1
+                case None     => return
+            }
 
-	/**
-	 * Returns the Elemental Scroll of type `Element` that is taught to the given Disciple, if any.
-	 * An Element is any type that can be converted into a ClassTag.
-	 *
-	 * @param disciple the Disciple to get the Scroll from.
-	 * @tparam Element the type of the Scroll to get.
-	 * @return an `Option` containing the Scroll of type `Element` that is taught to the given Disciple, if any.
-	 */
-	def inquireElementalKnowledge[Element: ClassTag](disciple: Disciple): Option[Element] = {
-		if !palace.isActive(disciple) then return None
-		val scrollId = registry.getValue[Element] match {
-			case Some(scroll) => scroll
-			case None => return None
-		}
-		// Must be some
-		val (sect, hall): (Sect, HallId) = palace.metas(disciple.id).get
-		sect.getScrollValue(scrollId, hall).map(_.asInstanceOf[Element])
-	}
+            patriarch.makeDismiss(sifuId, disciple, alliance.metas)
+        }
+    }
 
-	/**
-	 * Teaches a Martial Scroll to a Disciple.
-	 * A Martial Scroll is a Scroll that is taught by another Disciple.
-	 * The Disciple that teaches the Scroll is called the Sifu.
-	 *
-	 * @param disciple the Disciple to teach the Scroll to.
-	 * @param sifu     the Disciple that teaches the Scroll.
-	 */
-	def teachMartialScroll(disciple: Disciple, sifu: Disciple): Unit = {
+    /**
+     * Inquires about the elemental Knowledge being taught to the given Disciple, if any.
+     * An Element is any type that can be converted into a ClassTag.
+     *
+     * @param disciple the Disciple to inquire about.
+     * @tparam Type the type of the Knowledge to inquire about.
+     * @return an `Option` containing the Knowledge of type `Type` that is taught to the given Disciple, if any.
+     */
+    def inquire[Type: ClassTag](disciple: Disciple): Option[Type] = {
+        if !alliance.isRecruited(disciple) then return None
+        val sifuId = registry.getValue[Type] match {
+            case Some(scroll) => scroll
+            case None         => return None
+        }
 
-		// check if disciple is alive
-		if !palace.isActive(disciple) then return
-		else {
-			// Unit value because it's a tag
-			emperor.teachScroll(disciple = disciple, scroll = (), scrollId = sifu, palace.metas)
-		}
-	}
+        // Must be some
+        val (sect, hall): (Sect, HallId) = alliance.metas(disciple.id).get
+        sect.inquire(sifuId, hall).map(_.asInstanceOf[Type])
+    }
 
-	/**
-	 * Retires a Martial Scroll from a Disciple.
-	 * A Martial Scroll is a Scroll that is taught by another Disciple.
-	 * The Disciple that teaches the Scroll is called the Sifu.
-	 *
-	 * @param disciple the Disciple to retire the Scroll from.
-	 * @param sifu     the Disciple that teaches the Scroll.
-	 */
-	def retireMartialScroll(disciple: Disciple, sifu: Disciple): Unit = {
-		if !palace.isActive(disciple) then ()
-		else {
-			emperor.retireScroll(disciple, sifu, palace.metas)
-		}
-	}
+    /**
+     * Make a Sifu receive a Disciple.
+     *
+     * @param sifu     the Sifu to receive the Disciple.
+     * @param disciple the Disciple to receive.
+     */
+    def receive(sifu: SifuId, disciple: Disciple): Unit = {
 
-	/**
-	 * Returns the Martial Scroll that is taught to the given Disciple, if any.
-	 * A Martial Scroll is a Scroll that is taught by another Disciple.
-	 * The Disciple that teaches the Scroll is called the Sifu.
-	 *
-	 * @param disciple the Disciple to get the Scroll from.
-	 * @param sifu     the Disciple that teaches the Scroll.
-	 * @return True if the Disciple has the Scroll, False otherwise.
-	 */
-	def inquireMartialKnowledge(disciple: Disciple, sifu: Disciple): Boolean = {
-		if !palace.isActive(disciple) then false
-		else {
-			// Must be some
-			val (sect, hall): (Sect, HallId) = palace.metas(disciple.id).get
-			sect.getScrollValue(sifu, hall).isDefined
-		}
-	}
+        // check if disciple is alive
+        if !alliance.isRecruited(disciple) then ()
+        else
+            // Unit value because it's a tag
+            patriarch.makeReceive(sifu, disciple, knowledge = (), alliance.metas)
+    }
 
-	/**
-	 * Reincarnates a new Disciple into the Realm.
-	 *
-	 * @return the new Disciple.
-	 */
-	def reincarnate(): Disciple = {
-		// Disciple(0, 0) is already hardcoded to be the disciple disciple
-		val newDisciple = palace.recruit()
-		emperor.assignNew(disciple = newDisciple, metas = palace.metas)
-		newDisciple
-	}
+    /**
+     * Graduates a Disciple from their Sifu's teachings.
+     *
+     * @param sifu     the Sifu to dismiss the Disciple.
+     * @param disciple the Disciple dismiss
+     */
+    def dismiss(sifu: SifuId, disciple: Disciple): Unit = {
+        if !alliance.isRecruited(disciple) then ()
+        else {
+            patriarch.makeDismiss(sifu, disciple, alliance.metas)
+        }
+    }
+
+    /**
+     * Inquires about a Sifu/Disciple relationship.
+     *
+     * @param sifu     the Sifu.
+     * @param disciple the Disciple.
+     * @return True if the Sifu is teaching the Disciple., False otherwise.
+     */
+    def inquire(sifu: SifuId, disciple: Disciple): Boolean = {
+        if !alliance.isRecruited(disciple) then false
+        else {
+            // Must be some
+            val (sect, hall): (Sect, HallId) = alliance.metas(disciple.id).get
+            sect.inquire(sifu, hall).isDefined
+        }
+    }
 }
