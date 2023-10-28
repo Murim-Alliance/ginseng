@@ -37,9 +37,9 @@ type SectsIndex = mutable.BitSet
  * @param teacherIds   the Teachers of the Sects the Patriarch manages.
  */
 private[ginseng] class Patriarch private (
-                                             private val sects: mutable.ArrayBuffer[Sect],
-                                             private val teacherIds: mutable.ArrayBuffer[immutable.TreeSet[Disciple]],
-                                             private val teacherOfSects: mutable.TreeMap[Disciple, SectsIndex]
+    private val sects: mutable.ArrayBuffer[Sect],
+    private val teacherIds: mutable.ArrayBuffer[immutable.TreeSet[Disciple]],
+    private val teacherOfSects: mutable.TreeMap[Disciple, SectsIndex]
 ) {
 
     /**
@@ -65,9 +65,15 @@ private[ginseng] class Patriarch private (
      *
      * @param teachers the Teachers to find the Sects with.
      */
-    def findAllSectsWithTeachers(teachers: List[Disciple]): List[Sect] =
+    def findAllSectsWithFilter(andFilter: Vector[TeacherId], notFilter: Vector[TeacherId]): Vector[Sect] =
+        andFilter.view
+            .map(this.teacherOfSects(_))
+            .reduce((bs1, bs2) => bs1 & bs2)
+            .diff(notFilter.view.map(this.teacherOfSects(_)).reduce((bs1, bs2) => bs1 & bs2))
+            .iterator
+            .map(sects)
+            .toVector
 
-        teachers.view.map(this.teacherOfSects(_)).reduce((bs1, bs2) => bs1 & bs2).iterator.map(sects).toList
     /**
      * Make a Teacher dismiss a Disciple.
      *

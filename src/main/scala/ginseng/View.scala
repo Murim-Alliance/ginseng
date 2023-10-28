@@ -15,40 +15,14 @@ sealed trait BoolLogic {
 case class Not(override val teacherId: TeacherId) extends BoolLogic
 case class And(override val teacherId: TeacherId) extends BoolLogic
 
-trait Moogli[T] {
+trait ModifierMapper[T] {
     def create(teacherId: TeacherId): BoolLogic
 }
 
-object Moogli:
-    given [S]: Moogli[Without[S]] with {
+object ModifierMapper:
+    given [S]: ModifierMapper[Without[S]] with {
         override def create(teacherId: TeacherId): BoolLogic = Not(teacherId)
     }
-    given [S]: Moogli[With[S]] with {
+    given [S]: ModifierMapper[With[S]] with {
         override def create(teacherId: TeacherId): BoolLogic = And(teacherId)
     }
-
-sealed trait Filter {}
-
-class Without[T] extends View[T] with Filter {
-    type View = T
-
-}
-
-class With[T] extends View[T] with Filter {
-    type View = T
-
-}
-
-trait FilterEncoder[T] {
-    def encodeFilter(vector: Vector[Option[TeacherId]]): Vector[Option[BoolLogic]]
-}
-
-object FilterEncoder {
-    given FilterEncoder[EmptyTuple] with
-        final override def encodeFilter(vector: Vector[Option[TeacherId]]): Vector[Option[BoolLogic]] = Vector.empty
-
-    given [H <: Filter: Moogli, T <: Tuple: FilterEncoder]: FilterEncoder[H *: T] with {
-        final override def encodeFilter(vector: Vector[Option[TeacherId]]): Vector[Option[BoolLogic]] =
-            Vector(vector(0).map(summon[Moogli[H]].create)) ++ summon[FilterEncoder[T]].encodeFilter(vector.drop(1))
-    }
-}

@@ -10,10 +10,8 @@ import scala.reflect.ClassTag
  * @tparam Search TODO
  * @tparam Filter TODO
  */
-type Query[Search, Filter] = Filter match {
-    case None.type => Query[Search, With[Disciple]]
-    case _         => QueryImpl[MakeTuple[Search], MakeTuple[Filter]]
-}
+type Query    = [Search, Filter] =>> QueryImpl[MakeTuple[Search], MakeTuple[Filter]]
+type NoFilter = With[Disciple]
 
 /**
  * TODO
@@ -32,9 +30,14 @@ type MakeTuple[T] = T match {
  * @tparam S TODO
  * @tparam F TODO
  */
-class QueryImpl[S, F](val extraFilter: Vector[With[Disciple] | Without[Disciple]] = Vector()) {
-    type Search = S
-    type Filter = F
+class QueryImpl[S, F] private (private val realm: Realm, var extraFilters: Vector[BoolLogic] = Vector())
+    extends Iterable[S] {
+    type RealmSearch = S
+    type RealmFilter = F
+
+    def setFilters(filters: Vector[BoolLogic]): Unit = this.extraFilters = filters;
+
+    override def iterator: Iterator[S] = ???
 }
 
 /**

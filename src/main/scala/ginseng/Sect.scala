@@ -86,6 +86,15 @@ private[ginseng] final class Sect(
         Sect(blueprint().updated(teacherId, mutable.ArrayBuffer.empty[Any]))
 
     /**
+     * Creates a type clone of the Sect's Courtyards.
+     * All the Courtyards of the clone will be empty.
+     *
+     * @return an empty type clone of the Sect's Courtyards.
+     */
+    @inline private def blueprint(): Courtyards =
+        this.courtyards.map(pair => (pair._1, mutable.ArrayBuffer[Any]()))(ordering = courtyards.ordering)
+
+    /**
      * Returns the amount of Disciples in the first Courtyard.
      *
      * @return the amount of Disciples in the first Courtyard.
@@ -102,15 +111,6 @@ private[ginseng] final class Sect(
      */
     @inline def retire(teacherId: TeacherId): Sect =
         Sect(blueprint().removed(teacherId))
-
-    /**
-     * Creates a type clone of the Sect's Courtyards.
-     * All the Courtyards of the clone will be empty.
-     *
-     * @return an empty type clone of the Sect's Courtyards.
-     */
-    @inline private def blueprint(): Courtyards =
-        this.courtyards.map(pair => (pair._1, mutable.ArrayBuffer[Any]()))(ordering = courtyards.ordering)
 
     /**
      * Lossy transfers a row from the current Sect to another Sect.

@@ -55,15 +55,23 @@ class Realm private {
         val discipleList = summon[TypeListEncoder[S]].encodeTypeList(registry)
 
         val initialLength  = discipleList.length
-        val mappedDisciple = discipleList.flatten
-        if initialLength != mappedDisciple.length then return
+        val flattenedDisciples = discipleList.flatten
+        if initialLength != flattenedDisciples.length then return
         else ()
 
         val filterList = summon[TypeListEncoder[F]].encodeTypeList(registry)
         // For each element in the vector, wrap it in the appropriate filter
-        summon[FilterEncoder[F]].encodeFilter(filterList).foreach(println)
+        val (andFilter, notFilter) = summon[FilterEncoder[F]].encodeFilter(filterList).flatten.partitionMap {
+            case i: And => Left(i.teacherId)
+            case i: Not => Right(i.teacherId)
+        }
+        if filterList.length - notFilter.length != andFilter.length then return
+        else ()
 
-        // TODO
+        // combine the two AND filters
+        val sectsFound = patriarch.findAllSectsWithFilter(flattenedDisciples ++ andFilter, notFilter);
+        // get all the columns we need in this?
+
     }
 
     /**
