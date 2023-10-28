@@ -43,7 +43,7 @@ class Realm private {
      * @tparam Q TODO
      * @return an Array of Scrolls of type R, but not of type F, which is indexed by DiscipleId.
      */
-    def query[S <: Tuple: TypeListEncoder, F <: Tuple: FilterEncoder: TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
+    def query[S <: Tuple: TypeListEncoder: TypeListCast, F <: Tuple: FilterEncoder: TypeListEncoder, Q <: QueryImpl[S, F]](): Unit = {
         // find the tables that contain all R but filter on F
         // (A, B: Hlist) => (BitSet, B: Hlist) => List[BitSet] => BitSet (reduce/fold it)
         // now we know which tables we have to get
@@ -70,8 +70,14 @@ class Realm private {
 
         // combine the two AND filters
         val sectsFound = patriarch.findAllSectsWithFilter(flattenedDisciples ++ andFilter, notFilter);
-        // get all the columns we need in this?
 
+        val r = flattenedDisciples.map(id => sectsFound.map(_.getCourtyard(id).get)).map(summon[TypeListCast[S]].castCourtyard(_))
+
+        println(r)
+        // get all the columns we need in this?
+//        sectsFound.map(sect => {
+//            sect.
+//        })
     }
 
     /**

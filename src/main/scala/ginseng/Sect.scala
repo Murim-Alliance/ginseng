@@ -94,6 +94,8 @@ private[ginseng] final class Sect(
     @inline private def blueprint(): Courtyards =
         this.courtyards.map(pair => (pair._1, mutable.ArrayBuffer[Any]()))(ordering = courtyards.ordering)
 
+
+    @inline def getCourtyard(teacherId: TeacherId): Option[Courtyard] = this.courtyards.get(teacherId)
     /**
      * Returns the amount of Disciples in the first Courtyard.
      *

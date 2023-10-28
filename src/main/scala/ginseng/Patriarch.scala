@@ -1,7 +1,8 @@
 package ginseng
 
+import scala.collection.immutable
 import scala.collection.immutable.TreeSet
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 
 object Patriarch {
 
@@ -69,7 +70,10 @@ private[ginseng] class Patriarch private (
         andFilter.view
             .map(this.teacherOfSects(_))
             .reduce((bs1, bs2) => bs1 & bs2)
-            .diff(notFilter.view.map(this.teacherOfSects(_)).reduce((bs1, bs2) => bs1 & bs2))
+            .diff {
+                if notFilter.nonEmpty then notFilter.view.map(this.teacherOfSects(_)).reduce((bs1, bs2) => bs1 & bs2)
+                else Set.empty
+            }
             .iterator
             .map(sects)
             .toVector
